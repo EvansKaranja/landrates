@@ -1,8 +1,8 @@
 import { combineReducers } from "redux";
-import parkingReducer from "./parkingReducer";
+import ratesReducer from "./ratesReducer";
 import userReducer from "./userReducer";
 
 export default combineReducers({
-  parking: parkingReducer,
+  rates: ratesReducer,
   user: userReducer,
 });

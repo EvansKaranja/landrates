@@ -1,18 +1,18 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import {geocodeUserLocation,getUserLocation,getParkingSpaces,clearInfo} from "../../actions/parking";
+import {getParcels} from "../../actions/landrates";
 import {  Redirect} from "react-router-dom";
+
 
 
 
 import Header from "../Layout/Header";
 let config = {};
 config.params = {
-  // center: [-1.0993652999999999, 37.0109084],
-  center: [-1.28488, 36.825894],
+  center: [-1.1213599945293595, 37.00812220573425],
   zoomControl: false,
   zoom: 16,
-  maxZoom: 19,
+  // maxZoom: 20,
   minZoom: 1,
   scrollwheel: false,
   legends: true,
@@ -40,53 +40,35 @@ class Map extends Component {
       location:"",
       geojson: null,
       geojsonLayer: null,
-      subwayLinesFilter: "*",
-      show: false,
-      parkingspace: null,
-      onstreet: true,
-      offstreet: false,
-      disabled:false,
-      location: "",
-      display:true,
-      // selectedOption:e.target.value
     };
     this.mapRef = React.createRef();
     this.init = this.init.bind(this);
   }
   componentDidMount() {
     if (!this.state.map && !this.props.paymentInfo) this.init(this.mapRef.current);
+    this.props.getParcels()
+
 
   }
   componentDidUpdate(preProps, PrevState) {
-    if (this.props.location && !this.props.parkingSpaces) {
-      this.state.map.setView([this.props.location[0], this.props.location[0]])
-      const data = {
-        location:this.props.location,
-        parkingType:this.props.parkingType
-
-      }
-      this.props.getParkingSpaces(data)
-    }
+   console.log(this.props.parcels)
     if (
-      this.props.parkingSpaces &&
+      this.props.parcels &&
       this.state.map &&
       !this.state.geojsonLayer
     ) {
-      this.addGeoJSONLayer(this.props.parkingSpaces);
+      this.addGeoJSONLayer(this.props.parcels);
     } 
   }
   // adding json layer
   addGeoJSONLayer =(geojson)=> {
-    const geojsonLayer = L.geoJson(geojson, {
-      onEachFeature: this.onEachFeature,
-      pointToLayer: this.pointToLayer,
-    });
+    const geojsonLayer = L.geoJson(geojson);
     this.state.tileLayer.on("load",()=>geojsonLayer.addTo(this.state.map))
 
     
     this.setState({ geojsonLayer });
 
-    this.zoomToFeature(geojsonLayer);
+    // this.zoomToFeature(geojsonLayer);
   }
   zoomToFeature =(target)=> {
     var fitBoundsParams = {
@@ -127,7 +109,7 @@ class Map extends Component {
         ).addTo(map);
         this.setState({ map, tileLayer });
         L.control.zoom({
-          position:'topright'
+          position:'bottomleft'
         }).addTo(map)
   };
   // ------------------------------
@@ -201,51 +183,99 @@ clearJSONlayer=()=>{
           }}
         >
           <Header />
-          <div>
-            <div style={{display:"flex"}}>
-              <div style={{backgroundColor: "#3b3c36",width: "400px",height: "100vh",top: "60px",zIndex: "5",padding: "20px",color: "white"}}>
-                <div
-                  style={{
-                    height: "8vh",
-                    paddingTop: "5px",
-                    borderRadius: "5px",
-                  }}
-                >  
-                  <label>
-                    Search using your LR number:
-              </label>
-                  <form onSubmit={this.handleOnsubmit}>
-                    <div className="form-group" style={{ display: "flex" }}>
-                  
-                      <input
-                        type="text"
-                        className="form-control"
-                        style={{borderRadius:"20px  0  0 20px"}}
-                        onChange={this.handleonChange}
-                        required
-                      />
-                      <button type="submit" disabled={this.props.parkingSpaces} className="btn" style={{backgroundColor:"#3b58bf",width: "100px" ,borderRadius:" 0 20px 20px 0", color:"white"}} >Search</button>
-                    </div>
-                  </form>
-                
-                </div>
-              </div>
+          <div style = {{
+             height: "93vh",
+             width: "100vw",
+             position: "relative",
+          }}>
               <div
               ref={this.mapRef}
               id="map"
               style={{
-                height: "93vh",
-                width: "100vw",
+                height: "100%",
+                width: "100%",
                 position: "relative",
-                zIndex: "1",
+                zIndex:1
               }}
             ></div>
-              {/* ......................................... */}
-            
-            </div>
-            
-        
-       
+<div style ={{position:"absolute",top:0,right:0,height:"200px",width:"25vw", margin:"5px",padding:"5px",zIndex:3}}>
+<table className="table table-dark m-0 " >
+<thead style={{textAlign:"center"}}>
+  <label>Confirm Details</label>
+
+</thead>
+<tbody>
+  <tr style={{margin:"0px"}}>
+    <td>L/R</td>
+<td></td>
+  </tr>
+  <tr>
+    <td>Constituency</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Plot Owner</td>
+    <td></td>
+  </tr>
+  
+  <tr>
+    <td>Type of Ownership</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Land Use</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>Site Value</td>
+    <td> </td>
+  </tr>   
+  <tr>
+    <td>Improved Site Value</td>
+    <td> </td>
+  </tr>   
+  <tr>
+    <td>Total Rate</td>
+    <td> </td>
+  </tr>
+  <tr>
+    <td>
+
+  <button type="button"  className="btn btn-success btn-block">Pay Your Landrates</button>
+
+    </td>
+  </tr>
+   
+</tbody>
+</table>
+</div>
+
+            <div style={{backgroundColor: "#343a40",
+            width: "300px",height: "100px",top: 
+            "60px",zIndex: "2",color: "white",
+             position:"absolute",top:0,left:0, margin:"5px",padding:"5px",borderRadius:"16px"
+             
+             }}>
+            <div >  
+           <label>
+              Search using your LR number:
+            </label>
+            <form onSubmit={this.handleOnsubmit}>
+            <div className="form-group" style={{ display: "flex" }}>
+           <input
+          type="text"
+            className="form-control"
+            style={{borderRadius:"20px  0  0 20px"}}
+            onChange={this.handleonChange}
+            required
+      />
+      <button type="submit" disabled={this.props.parkingSpaces} className="btn" style={{backgroundColor:"#3b58bf",width: "100px" ,borderRadius:" 0 20px 20px 0", color:"white"}} >Search</button>
+    </div>
+  </form>
+</div>
+</div> 
+
+
           </div>
         </div>
       );
@@ -253,12 +283,18 @@ clearJSONlayer=()=>{
   }
 }
 const mapStateToProps = (state) => ({
-  user: state.user,
-  location: state.parking.location,
-  parkingSpaces: state.parking.parkingSpaces,
-  paymentInfo:state.parking.paymentInfo,
-  parkingType: state.parking.parkingType
+parcels:state.rates.parcels
   
 });
 
-export default connect(mapStateToProps,{getParkingSpaces,geocodeUserLocation,getUserLocation,clearInfo})(Map);
+export default connect(mapStateToProps,{getParcels})(Map);
+
+
+
+
+
+ 
+
+
+
+

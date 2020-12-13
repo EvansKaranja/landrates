@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import { Link, Redirect} from "react-router-dom";
-import {clearInfo} from "../../actions/parking"
-import { signOutUser, getUser } from "../../actions/user";
 class Header extends Component {
   state = {
     displaySigninForm: "none",
@@ -10,13 +8,7 @@ class Header extends Component {
     adminstrator:false
   };
   componentDidMount() {
-if(this.props.token)this.props.getUser();
-  }
-  handlesigninClick = () => {
-    this.setState({ ...this.state, displaySigninForm: "block" });
-  };
-  handleSignupClick = () => {
-    this.setState({ ...this.state, displaySignUpForm: "block" });
+
   };
   handleCancel = () => {
     const displaySigninForm = "none";
@@ -31,9 +23,7 @@ if(this.props.token)this.props.getUser();
     this.props.signOutUser();
     console.log(this.props.isAuthenticated);
   };
-  handleClick = () => {
-    this.props.clearInfo()
-  }
+  
   adminstrator = () => {
     this.setState({
       ...this.state,
@@ -73,4 +63,4 @@ const mapStateToProps = (state) => ({
   user: state.user.user,
   token:state.user.token
 });
-export default connect(mapStateToProps, { signOutUser, getUser ,clearInfo})(Header);
+export default connect(mapStateToProps, { })(Header);
