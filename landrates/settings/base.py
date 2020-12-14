@@ -20,8 +20,9 @@ INSTALLED_APPS = [
     'accounts',
     'knox',
     'clientside',
+    'plot',
 
-    # 'rest_framework_gis',
+    'rest_framework_gis',
     # 'frontend',
     
 

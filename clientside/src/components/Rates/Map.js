@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import {getParcels} from "../../actions/landrates";
+import {getParcels,makePayments} from "../../actions/landrates";
 import {  Redirect} from "react-router-dom";
 
 
@@ -36,70 +36,28 @@ class Map extends Component {
     this.state = {
       map: null,
       tileLayer: null,
-      numberEntrances: null,
-      location:"",
-      geojson: null,
       geojsonLayer: null,
+      lr:"",
+      phoneNumber:"",
     };
     this.mapRef = React.createRef();
     this.init = this.init.bind(this);
   }
   componentDidMount() {
     if (!this.state.map && !this.props.paymentInfo) this.init(this.mapRef.current);
-    this.props.getParcels()
-
-
   }
+
   componentDidUpdate(preProps, PrevState) {
-   console.log(this.props.parcels)
     if (
       this.props.parcels &&
       this.state.map &&
       !this.state.geojsonLayer
     ) {
       this.addGeoJSONLayer(this.props.parcels);
+
     } 
   }
-  // adding json layer
-  addGeoJSONLayer =(geojson)=> {
-    const geojsonLayer = L.geoJson(geojson);
-    this.state.tileLayer.on("load",()=>geojsonLayer.addTo(this.state.map))
-
-    
-    this.setState({ geojsonLayer });
-
-    // this.zoomToFeature(geojsonLayer);
-  }
-  zoomToFeature =(target)=> {
-    var fitBoundsParams = {
-      paddingTopLeft: [10, 10],
-      paddingBottompLeft: [10, 10],
-    };
-    this.state.map.fitBounds(target.getBounds(), fitBoundsParams);
-  }
-  onEachFeature=(feature, layer) =>{
-    if (feature) {
-      layer.on({
-        click: (e) => {
-          return this.highlightFeature(e);
-        },
-      });
-    }
-  }
-  highlightFeature = (e) => {
-    this.setState({ show: true, parkingspace: e.target.feature });
-  }
-  pointToLayer=(feature, latlng) =>{
-    var greenIcon = L.icon({
-      iconUrl: "https://unpkg.com/leaflet@1.6.0/dist/images/marker-icon.png",
-
-      iconSize: [25, 41], // size of the icon
-      iconAnchor: [22, 94], // point of the icon which will correspond to marker's location
-      popupAnchor: [-3, -76], // point from which the popup should open relative to the iconAnchor
-    });
- 
-    return L.marker(latlng, { icon: greenIcon });
-  }
+  
   
   init = (id) => {
         let map = L.map(id,config.params)
@@ -112,6 +70,47 @@ class Map extends Component {
           position:'bottomleft'
         }).addTo(map)
   };
+  addGeoJSONLayer =(geojson)=> {
+    const geojsonLayer = L.geoJson(geojson,{style:this.style});
+    this.state.tileLayer.on("load",()=>geojsonLayer.addTo(this.state.map))
+
+    
+    this.setState({ geojsonLayer });
+
+    this.zoomToFeature(L.geoJson(this.props.plot));
+ let latlng = this.state.map.getCenter(this.props.plot)
+ let lng = latlng["lng"]
+ let lat = latlng["lat"]
+ console.log(lat)
+ console.log(lng)
+    L.marker([lat,lng]).addTo(this.state.map);
+  
+  }
+  zoomToFeature =(target)=> {
+    var fitBoundsParams = {
+      paddingTopLeft: [10, 10],
+      paddingBottompLeft: [10, 10],
+    };
+    this.state.map.fitBounds(target.getBounds(), fitBoundsParams);
+  }
+  style=(feature) =>{
+    let n = feature.properties.land_reference
+    let b= this.props.lr
+    return {
+        fillColor: feature.properties.land_reference==this.props.lr["LR"]?"red":"white",
+        weight: 2,
+        opacity: 1,
+        color: 'black',
+        fillOpacity: 0.7
+    };
+}
+defineColor=(feature)=>{
+  if(feature.owner=="KIAMBU COUNTY")return "green"
+  if(feature.paid== true)return "blue"
+  if(feature.paid==false)return "red"
+
+}
+
   // ------------------------------
 handleonChange = (e) => {
     this.setState({
@@ -120,58 +119,63 @@ handleonChange = (e) => {
   };
 handleOnsubmit = (e) => {
   e.preventDefault();
-  let name = this.state.location
+  this.setState({...this.state, lr:""})
+  var data = {"LR":this.state.lr}
+  this.props.getParcels(data)
+}
 
-    this.props.geocodeUserLocation(name)
-    this.setState({
-      location: "",
-      display:false
-      
-    })
+
+handlePayments=(e)=>{
+  console.log("called")
+  e.preventDefault();
+  var data = {
+    "phoneNumber":this.state.phoneNumber,
+    "lr":this.props.plot.properties.land_reference
+  }
+  this.props.makePayments(data)
+  this.setState({...this.state, phoneNumber:""})
+
   
 }
-  getlocation = () => {
-    const data = {
-      offstreet: this.state.offstreet,
-      onstreet: this.state.onstreet,
-      disabled: this.state.disabled,
+siteValue=(zone)=>{
+  if(zone =="ONE") return "1.5M"
+  if(zone =="TWO") return "1.3M"
+  if(zone =="THREE") return "1M"
+  if(zone =="FOUR") return "0.8M"
+    }
+ImprovedSiteValue=(zone)=>{
+      if(zone =="FOUR") return "700,000"
+      if(zone =="THREE") return "500,000"
+      if(zone =="TWO") return "100,000"
+      if(zone =="ONE") return "200,000"
+        }
+TotalRates=(zone,landuse)=>{
+    let site_value={
+      ONE:1500000,
+      TWO:1300000,
+      THREE:1000000,
+      FOUR:800000,
 
     }
-    this.props.getUserLocation(data)
+    let improvedsite_value={
+      ONE:200000,
+      TWO:100000,
+      THREE:500000,
+      FOUR:700000,
 
-this.setState({display: false});
-  
-};
-  handleClick = (e) => {
-    this.setState({
-      selectedOption: e.target.value
-    });
-    console.log(this.state.selectedOption)
-    // if (e.target.name === "disabled") {
-    //   const disabled = !this.state.disabled
-    //   this.setState({
-    //  disabled:disabled
-    //   })
-    // }
+    }
+    let rate = {
+      residential:0.02,
+      Commercial:0.03,
+      Bare:0.01,
+    }
+var value = rate[landuse]*(site_value[zone]+improvedsite_value[zone])
 
+return value
 }
-clearJSONlayer=()=>{
-  console.log("called")
-  this.props.clearInfo()
-  this.state.map.removeLayer(this.state.geojsonLayer);
-  location.reload();
-  this.setState({
-    ...this.state,
-    show:false,
-    geojsonLayer:null,
-    display:true,
-    parkingspace:null
-  })
-}
-
   render() {
     if (this.props.paymentInfo) {
-      return <Redirect to="/parking" />
+      return <Redirect to="/" />
     } else {
 
       return (
@@ -187,68 +191,88 @@ clearJSONlayer=()=>{
              height: "93vh",
              width: "100vw",
              position: "relative",
+             overflow:"hidden"
           }}>
               <div
               ref={this.mapRef}
               id="map"
               style={{
-                height: "100%",
+                height: "90vh",
                 width: "100%",
                 position: "relative",
                 zIndex:1
               }}
             ></div>
-<div style ={{position:"absolute",top:0,right:0,height:"200px",width:"25vw", margin:"5px",padding:"5px",zIndex:3}}>
-<table className="table table-dark m-0 " >
-<thead style={{textAlign:"center"}}>
-  <label>Confirm Details</label>
-
+           {this.props.parcels?
+<div style ={{position:"absolute",top:0,right:"5px",height:"600px",width:"300px", margin:"5px",padding:"5px",zIndex:3,background:"#343a40"}}>
+  <div style={{}}>
+  <h5 style={{padding:"10px",textAlign:"center", color:"white"}} className="table table-dark m-0 ">Plot Details</h5>
+<table className="table table-dark mr-0">
+<thead>
 </thead>
 <tbody>
   <tr style={{margin:"0px"}}>
     <td>L/R</td>
-<td></td>
+           <td>{this.props.plot.properties.land_reference}</td>
   </tr>
   <tr>
     <td>Constituency</td>
-    <td></td>
+    <td>{this.props.plot.properties.contituency}</td>
   </tr>
   <tr>
-    <td>Plot Owner</td>
-    <td></td>
+    <td style={{fontSize:"15px"}}>Plot Owner</td>
+    <td style={{fontSize:"10px",fontWeight:"bold"}}>{this.props.plot.properties.owner}</td>
   </tr>
   
   <tr>
     <td>Type of Ownership</td>
-    <td></td>
+    <td>{this.props.plot.properties.ownership}</td>
   </tr>
-  <tr>
-    <td>Land Use</td>
-    <td></td>
-  </tr>
+ 
   <tr>
     <td>Site Value</td>
-    <td> </td>
+    <td> {this.siteValue(this.props.plot.properties.zone)}</td>
   </tr>   
   <tr>
     <td>Improved Site Value</td>
-    <td> </td>
+    <td>{this.ImprovedSiteValue(this.props.plot.properties.zone)} </td>
   </tr>   
   <tr>
     <td>Total Rate</td>
-    <td> </td>
+    <td>{this.TotalRates(this.props.plot.properties.zone,this.props.plot.properties.land_use)}</td>
   </tr>
   <tr>
-    <td>
-
-  <button type="button"  className="btn btn-success btn-block">Pay Your Landrates</button>
-
-    </td>
+  <td> Amount Owed</td>
+    <td> {this.props.plot.properties.paid?<span>0</span>:<span >KSH <span style={{color:"red"}}>{this.TotalRates(this.props.plot.properties.zone,this.props.plot.properties.land_use)}</span></span>}</td>
   </tr>
-   
+<tr>
+  
+  
+</tr>
 </tbody>
+
 </table>
+{this.props.plot.properties.paid?<span></span>:
+<div> <input   type="submit"  className="btn btn-success btn-block mb-2" value="Make payment"/>
+ <form onSubmit={this.handlePayments}>
+                    <div className="form-group" style={{ display: "flex" }}>
+                  
+                      <input
+                        type="text"
+                        className="form-control rounded-0"
+                        placeholder="254740321847"
+                        name="phoneNumber"
+                        value={this.state.phoneNumber}
+                        onChange={this.handleonChange}
+                        required
+                        // autoComplete="off"
+                      />
+                      <button type="submit" className="btn btn-success rounded-0" style={{ width: "100px" }} >Send</button>
+                      
+                    </div>
+                  </form></div>}
 </div>
+</div>:<span></span>}
 
             <div style={{backgroundColor: "#343a40",
             width: "300px",height: "100px",top: 
@@ -265,17 +289,20 @@ clearJSONlayer=()=>{
            <input
           type="text"
             className="form-control"
+            name="lr"
+            value={this.state.lr}
             style={{borderRadius:"20px  0  0 20px"}}
             onChange={this.handleonChange}
+            placeholder="eg LR 001/011"
             required
+            // autoComplete="off"
       />
-      <button type="submit" disabled={this.props.parkingSpaces} className="btn" style={{backgroundColor:"#3b58bf",width: "100px" ,borderRadius:" 0 20px 20px 0", color:"white"}} >Search</button>
+      <button type="submit"   className="btn" style={{backgroundColor:"#3b58bf",width: "100px" ,borderRadius:" 0 20px 20px 0", color:"white"}} >Search</button>
+      
     </div>
   </form>
 </div>
 </div> 
-
-
           </div>
         </div>
       );
@@ -283,11 +310,14 @@ clearJSONlayer=()=>{
   }
 }
 const mapStateToProps = (state) => ({
-parcels:state.rates.parcels
+parcels:state.rates.parcels,
+plot:state.rates.plot,
+lr:state.rates.lr
+
   
 });
 
-export default connect(mapStateToProps,{getParcels})(Map);
+export default connect(mapStateToProps,{getParcels,makePayments})(Map);
 
 
 

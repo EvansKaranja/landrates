@@ -4,6 +4,8 @@ import { Provider } from "react-redux";
 import store from "../store";
 import "./App.css";
 import Map from "./Rates/Map";
+import Admin from "./Rates/Admin/Admin"
+import LandingPage from "./Layout/LandingPage"
 import PrivateRoute from "./common/PrivateRoute";
 
 class App extends Component {
@@ -12,9 +14,15 @@ class App extends Component {
       <Provider store={store}>
         <Router>
           <div>
-            <Map/>
+            {/* <Map/> */}
+            {/* <LandingPage/> */}
+            {/* <Route exact path="/" component={LandingPage} /> */}
+            <Route exact path="/" component={Map} />
+            <Route exact path="/admin" component={Admin} />
+
+
             {/* <Switch>
-              <PrivateRoute exact path="/map" component={Map} />
+              <PrivateRoute exact path="/admin" component={Admin} />
             </Switch> */}
           </div>
         </Router>
