@@ -58,8 +58,10 @@ class Map extends Component {
     } 
   }
   
+  /* -----------------Map Element----------------------*/
   
   init = (id) => {
+    // Initialize the map
         let map = L.map(id,config.params)
         const tileLayer = L.tileLayer(
           config.tileLayer.uri,
@@ -71,12 +73,10 @@ class Map extends Component {
         }).addTo(map)
   };
   addGeoJSONLayer =(geojson)=> {
+    // Add layer
     const geojsonLayer = L.geoJson(geojson,{style:this.style});
     this.state.tileLayer.on("load",()=>geojsonLayer.addTo(this.state.map))
-
-    
     this.setState({ geojsonLayer });
-
     this.zoomToFeature(L.geoJson(this.props.plot));
  let latlng = this.state.map.getCenter(this.props.plot)
  let lng = latlng["lng"]
@@ -87,6 +87,7 @@ class Map extends Component {
   
   }
   zoomToFeature =(target)=> {
+    // Zoom Feature
     var fitBoundsParams = {
       paddingTopLeft: [10, 10],
       paddingBottompLeft: [10, 10],
@@ -94,6 +95,7 @@ class Map extends Component {
     this.state.map.fitBounds(target.getBounds(), fitBoundsParams);
   }
   style=(feature) =>{
+    // Custom style each parcel
     let n = feature.properties.land_reference
     let b= this.props.lr
     return {
@@ -105,13 +107,14 @@ class Map extends Component {
     };
 }
 defineColor=(feature)=>{
+  // Define the color based on the feature properties
   if(feature.owner=="KIAMBU COUNTY")return "green"
   if(feature.paid== true)return "blue"
   if(feature.paid==false)return "red"
 
 }
 
-  // ------------------------------
+  /* -----------------Form Element----------------------*/
 handleonChange = (e) => {
     this.setState({
       [e.target.name]: e.target.value,
@@ -138,31 +141,32 @@ handlePayments=(e)=>{
   
 }
 siteValue=(zone)=>{
+  // Get the site value of a parces
   if(zone =="ONE") return "1.5M"
   if(zone =="TWO") return "1.3M"
   if(zone =="THREE") return "1M"
   if(zone =="FOUR") return "0.8M"
     }
 ImprovedSiteValue=(zone)=>{
+  // Get the improved site value of a parces
       if(zone =="FOUR") return "700,000"
       if(zone =="THREE") return "500,000"
       if(zone =="TWO") return "100,000"
       if(zone =="ONE") return "200,000"
         }
 TotalRates=(zone,landuse)=>{
+  // Compute the landrates value of a pay
     let site_value={
       ONE:1500000,
       TWO:1300000,
       THREE:1000000,
       FOUR:800000,
-
     }
     let improvedsite_value={
       ONE:200000,
       TWO:100000,
       THREE:500000,
       FOUR:700000,
-
     }
     let rate = {
       residential:0.02,
@@ -173,6 +177,8 @@ var value = rate[landuse]*(site_value[zone]+improvedsite_value[zone])
 
 return value
 }
+
+
   render() {
     if (this.props.paymentInfo) {
       return <Redirect to="/" />
